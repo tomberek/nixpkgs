@@ -4,11 +4,11 @@ stdenv.mkDerivation rec {
   shortName = "setuptools-${version}";
   name = "${python.executable}-${shortName}";
 
-  version = "0.9.8";
+  version = "1.0";
 
   src = fetchurl {
     url = "http://pypi.python.org/packages/source/s/setuptools/${shortName}.tar.gz";
-    sha256 = "037b8x3fdhx8s6xafqndi3yr8x2vr42n1kzs7jxk6j9s9fd65gs2";
+    sha256 = "1d91lk9lcz86592q0im75176gyi5bwzzpii78vqs6mnaj4avfkmw";
   };
 
   patches = [
