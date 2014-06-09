@@ -1397,6 +1397,8 @@ self : let callPackage = x : y : modifyPrio (newScope self x y); in
 
   mersenneRandomPure64 = callPackage ../development/libraries/haskell/mersenne-random-pure64 {};
 
+  MFlow = callPackage ../development/libraries/haskell/MFlow {};
+
   midi = callPackage ../development/libraries/haskell/midi {};
 
   mime = callPackage ../development/libraries/haskell/mime {};
@@ -1835,6 +1837,8 @@ self : let callPackage = x : y : modifyPrio (newScope self x y); in
 
   reflection = callPackage ../development/libraries/haskell/reflection {};
 
+  RefSerialize = callPackage ../development/libraries/haskell/RefSerialize {};
+
   regexApplicative = callPackage ../development/libraries/haskell/regex-applicative {};
 
   regexBase_0_72_0_2 = callPackage ../development/libraries/haskell/regex-base/0.72.0.2.nix {};
@@ -2155,6 +2159,8 @@ self : let callPackage = x : y : modifyPrio (newScope self x y); in
 
   tastyTh = callPackage ../development/libraries/haskell/tasty-th {};
 
+  TCache = callPackage ../development/libraries/haskell/TCache {};
+
   templateDefault = callPackage ../development/libraries/haskell/template-default {};
 
   temporary = callPackage ../development/libraries/haskell/temporary {};
@@ -2440,6 +2446,8 @@ self : let callPackage = x : y : modifyPrio (newScope self x y); in
   wizards = callPackage ../development/libraries/haskell/wizards {};
 
   word8 = callPackage ../development/libraries/haskell/word8 {};
+
+  Workflow = callPackage ../development/libraries/haskell/Workflow {};
 
   wreq = callPackage ../development/libraries/haskell/wreq {};
 
