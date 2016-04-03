@@ -11,6 +11,7 @@ self: super: {
   array = null;
   base = null;
   binary = null;
+  bin-package-db=null;
   bytestring = null;
   Cabal = null;
   containers = null;
