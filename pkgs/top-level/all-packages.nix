@@ -1103,6 +1103,8 @@ in
 
   cloogppl = callPackage ../development/libraries/cloog-ppl { };
 
+  cloud9 = callPackage ../servers/cloud9 { };
+
   compass = callPackage ../development/tools/compass { };
 
   convmv = callPackage ../tools/misc/convmv { };
