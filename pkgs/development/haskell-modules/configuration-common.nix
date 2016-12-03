@@ -282,8 +282,23 @@ self: super: {
   msgpack-rpc = dontCheck super.msgpack-rpc;
   persistent-zookeeper = dontCheck super.persistent-zookeeper;
   pocket-dns = dontCheck super.pocket-dns;
+  
   postgresql-simple = dontCheck super.postgresql-simple;
-  postgrest = dontCheck super.postgrest;
+    postgrest = let 
+      postgrest_pre = addBuildDepends super.postgrest [super.configurator super.heredoc super.insert-ordered-containers super.lens super.lens-aeson super.protolude self.swagger2];
+      in
+  dontHaddock (dontCheck (( overrideCabal postgrest_pre (drv: {
+    enableSharedExecutables=false;
+    version = "0.3.2-head";
+    src = pkgs.fetchFromGitHub {
+      owner = "begriffs";
+      repo = "postgrest";
+      rev = "0d85152e42952dd4d67671236e03c97194789716";
+      sha256 = "18lwf9f76rvcx5ipmya059al7f8s0lnpkc9jnvs3pikvqx859biw";
+    };
+  }))));
+  swagger2 = dontHaddock (dontCheck super.swagger2);
+
   snowball = dontCheck super.snowball;
   sophia = dontCheck super.sophia;
   test-sandbox = dontCheck super.test-sandbox;
