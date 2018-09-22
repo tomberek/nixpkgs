@@ -97,7 +97,7 @@ stdenv.mkDerivation rec {
 
     for file in $(find $out/bin $out/share/gnuradio/examples -type f -executable); do
         wrapProgram "$file" \
-            --prefix PYTHONPATH : $PYTHONPATH:$(toPythonPath "$out") \
+            --suffix PYTHONPATH : $PYTHONPATH:$(toPythonPath "$out") \
             --set MATPLOTLIBRC "$out/share/gnuradio" \
             ${stdenv.lib.optionalString stdenv.isDarwin "--set DYLD_FRAMEWORK_PATH /System/Library/Frameworks"}
     done
