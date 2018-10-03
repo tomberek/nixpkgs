@@ -16477,6 +16477,14 @@ with pkgs;
 
   gnss-sdr = callPackage ../applications/misc/gnss-sdr { boost=boost166; };
 
+  gnuradio_3_8  = lowPrio (callPackage ../applications/misc/gnuradio/3_8.nix {
+    inherit (python3Packages) python3Packages numpy scipy matplotlib
+Mako pyqt5 pyopengl
+pyaml sphinx lxml pygobject3 pycairo pygtk;
+    inherit (darwin.apple_sdk.frameworks) CoreAudio;
+    fftw = fftwFloat;
+    qwt = qwt6_qt4;
+  });
   gnuradio = callPackage ../applications/misc/gnuradio {
     inherit (python2Packages) cheetah lxml Mako matplotlib numpy python pyopengl pyqt4 scipy wxPython pygtk;
     inherit (darwin.apple_sdk.frameworks) CoreAudio;
