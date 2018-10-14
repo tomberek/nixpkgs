@@ -578,6 +578,7 @@
   ./services/networking/pdns-recursor.nix
   ./services/networking/pptpd.nix
   ./services/networking/prayer.nix
+  ./services/networking/pritunl.nix
   ./services/networking/privoxy.nix
   ./services/networking/prosody.nix
   ./services/networking/quagga.nix

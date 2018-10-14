@@ -3473,6 +3473,8 @@ in {
     };
   };
 
+  pritunl = callPackage ../tools/networking/pritunl {};
+
   prov = callPackage ../development/python-modules/prov { };
 
   pudb = buildPythonPackage rec {
