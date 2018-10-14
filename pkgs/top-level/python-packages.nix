@@ -16058,6 +16058,8 @@ EOF
     inherit (pkgs.xorg) xorgserver;
   };
 
+  yubico-client = callPackage ../development/python-modules/yubico-client {};
+
   hidapi = callPackage ../development/python-modules/hidapi {
     inherit (pkgs) udev libusb1;
   };
