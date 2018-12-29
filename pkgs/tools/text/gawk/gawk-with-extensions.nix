@@ -5,8 +5,8 @@ buildEnv rec {
     pathsToLink = [ "/bin" "/etc" "/include" "/lib" "/libexec" "/share" ];
     buildInputs = [ makeWrapper ];
     postBuild = ''
-      cp $out/lib/gawk/* $out/lib/.
+      ln -s $out/lib/gawk/* $out/lib/.
       wrapProgram $out/bin/gawk \
         --prefix AWKLIBPATH : $out/lib
-  '';
+    '';
 }

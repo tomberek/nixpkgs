@@ -15,11 +15,10 @@
 , postgresql
 , hiredis
 , expat
-, doCheck ? stdenv.isLinux
 }:
 
 stdenv.mkDerivation rec {
-  name = "gawkextlib-unstable";
+  name = "gawkextlib-unstable-2018-07-20";
 
   src = fetchgit {
     url = "git://git.code.sf.net/p/gawkextlib/code";
@@ -28,12 +27,11 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ autoconf automake autoreconfHook pkgconfig texinfo gettext
-    rapidjson gd shapelib libharu lmdb gmp mpfr postgresql hiredis expat
   ];
 
-  buildInputs = [ gawk ];
+  buildInputs = [ gawk rapidjson gd shapelib libharu lmdb gmp mpfr postgresql hiredis expat ];
 
-  configurePhase = "";
+  dontConfigure = true;
   postPatch = ''
     cd lib
   '';
@@ -46,20 +44,22 @@ stdenv.mkDerivation rec {
     export LDFLAGS="$LDFLAGS -L$out/lib"
     declare -a list=("abort" "csv" "errno" "gd" "haru" "json" "lmdb" "mbs" "mpfr" "pgsql" "redis" "select" "xml")
     for i in "''${list[@]}" ; do
-      cd ../$i
+      pushd ../$i
       autoreconf -i
       ./configure --with-gawkextlib=$out/lib/
       make
+      popd
     done
-    cd ..
+    pushd ..
     cp */.libs/* $out/lib
   '';
   installPhase = ''
     mkdir -p $out/lib
     cp */.libs/* $out/lib
+    popd
   '';
 
-  inherit doCheck;
+  doCheck = stdenv.isLinux;
 
   meta = with stdenv.lib; {
     homepage = https://sourceforge.net/projects/gawkextlib/;
