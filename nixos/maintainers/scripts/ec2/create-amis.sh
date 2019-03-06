@@ -85,7 +85,7 @@ for type in $types; do
                                 --ec2cert /nix/store/6qh0cj9gbdwm1sddkk4lvkhrpqmxfbhk-ec2-ami-tools-1.5.7/etc/ec2/amitools/cert-ec2-gov.pem
                                 -d $imageDir.tmp \
                                 -i $rawFile --arch $arch \
-                                --region 
+                                --region $region \
                                 --user "$AWS_ACCOUNT" -c "$EC2_CERT" -k "$EC2_PRIVATE_KEY"
                             mv $imageDir.tmp $imageDir
                         fi
@@ -133,7 +133,7 @@ for type in $types; do
                             taskId=$(ec2-import-volume $vhdFile --no-upload -f vhd \
                                 -O "$AWS_ACCESS_KEY_ID" -W "$AWS_SECRET_ACCESS_KEY" \
                                 -o "$AWS_ACCESS_KEY_ID" -w "$AWS_SECRET_ACCESS_KEY" \
-                                -s 30
+                                -s 12 \
                                 --region "$region" -z "${region}a" \
                                 --bucket "$bucket" --prefix "$bucketDir/" \
                                 | tee /dev/stderr \
