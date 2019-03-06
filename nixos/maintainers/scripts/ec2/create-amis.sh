@@ -10,7 +10,7 @@ version=$(nix-instantiate --eval --strict '<nixpkgs>' -A lib.version | sed s/'"'
 major=${version:0:5}
 echo "NixOS version is $version ($major)"
 
-stateDir=/home/deploy/amis/ec2-image-$version
+stateDir=/home/dev/nixos-ami/amis/ec2-image-$version
 echo "keeping state in $stateDir"
 mkdir -p $stateDir
 
@@ -18,7 +18,8 @@ rm -f ec2-amis.nix
 
 types="hvm"
 stores="ebs"
-regions="eu-west-1 eu-west-2 eu-west-3 eu-central-1 us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 ap-southeast-1 ap-southeast-2 ap-northeast-1 ap-northeast-2 sa-east-1 ap-south-1"
+#regions="eu-west-1 eu-west-2 eu-west-3 eu-central-1 us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 ap-southeast-1 ap-southeast-2 ap-northeast-1 ap-northeast-2 sa-east-1 ap-south-1"
+regions="us-gov-west-1 us-gov-east-1"
 
 for type in $types; do
     link=$stateDir/$type
@@ -39,7 +40,7 @@ for type in $types; do
 
     for store in $stores; do
 
-        bucket=nixos-amis
+        bucket=nixos-ami
         bucketDir="$version-$type-$store"
 
         prevAmi=
@@ -75,13 +76,16 @@ for type in $types; do
                             qemu-img convert -f qcow2 -O raw $imageFile $rawFile.tmp
                             mv $rawFile.tmp $rawFile
                         fi
+                        echo hi
 
                         if ! [ -d $imageDir ]; then
                             rm -rf $imageDir.tmp
                             mkdir -p $imageDir.tmp
                             ec2-bundle-image \
+                                --ec2cert /nix/store/6qh0cj9gbdwm1sddkk4lvkhrpqmxfbhk-ec2-ami-tools-1.5.7/etc/ec2/amitools/cert-ec2-gov.pem
                                 -d $imageDir.tmp \
                                 -i $rawFile --arch $arch \
+                                --region 
                                 --user "$AWS_ACCOUNT" -c "$EC2_CERT" -k "$EC2_PRIVATE_KEY"
                             mv $imageDir.tmp $imageDir
                         fi
@@ -92,8 +96,10 @@ for type in $types; do
                             ec2-upload-bundle \
                                 -m $imageDir/$type.raw.manifest.xml \
                                 -b "$bucket/$bucketDir" \
-                                -a "$AWS_ACCESS_KEY_ID" -s "$AWS_SECRET_ACCESS_KEY" \
-                                --location EU
+                                --region $region \
+                                -a "$AWS_ACCESS_KEY_ID" -s "$AWS_SECRET_ACCESS_KEY"
+                                
+                                #--location EU
                             touch $imageDir/uploaded
                         fi
 
@@ -108,9 +114,10 @@ for type in $types; do
                             qemu-img convert -f qcow2 -O vpc $imageFile $vhdFile.tmp
                             mv $vhdFile.tmp $vhdFile
                         fi
+                        echo $vhdFile
 
                         vhdFileLogicalBytes="$(qemu-img info "$vhdFile" | grep ^virtual\ size: | cut -f 2 -d \(  | cut -f 1 -d \ )"
-                        vhdFileLogicalGigaBytes=$(((vhdFileLogicalBytes-1)/1024/1024/1024+1)) # Round to the next GB
+                        vhdFileLogicalGigaBytes=$(((vhdFileLogicalBytes-1)/1024/1024/1024+10)) # Round to the next GB
 
                         echo "Disk size is $vhdFileLogicalBytes bytes. Will be registered as $vhdFileLogicalGigaBytes GB."
 
@@ -118,12 +125,15 @@ for type in $types; do
                         volId=$(cat $stateDir/$region.$type.vol-id 2> /dev/null || true)
                         snapId=$(cat $stateDir/$region.$type.snap-id 2> /dev/null || true)
 
+                        echo hi from chd
+                        echo $bucket --prefix $bucketDir region:$region
                         # Import the VHD file.
                         if [ -z "$snapId" -a -z "$volId" -a -z "$taskId" ]; then
                             echo "importing $vhdFile..."
                             taskId=$(ec2-import-volume $vhdFile --no-upload -f vhd \
                                 -O "$AWS_ACCESS_KEY_ID" -W "$AWS_SECRET_ACCESS_KEY" \
                                 -o "$AWS_ACCESS_KEY_ID" -w "$AWS_SECRET_ACCESS_KEY" \
+                                -s 30
                                 --region "$region" -z "${region}a" \
                                 --bucket "$bucket" --prefix "$bucketDir/" \
                                 | tee /dev/stderr \
