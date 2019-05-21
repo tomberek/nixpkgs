@@ -136,6 +136,7 @@ in {
     sha256 = "0jza8cmznnyiia43056dij1jdmz62dx17wsn0zxksh9h6817nmaw";
     patches = [
       ./1.1/nix-ssl-cert-file.patch
+      ./1.1/long-chacha-nonce.patch
 
       (if stdenv.hostPlatform.isDarwin
        then ./1.1/use-etc-ssl-certs-darwin.patch
