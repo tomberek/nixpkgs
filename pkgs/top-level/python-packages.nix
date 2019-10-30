@@ -2824,7 +2824,11 @@ in {
 
   schema = callPackage ../development/python-modules/schema {};
 
+  schemainspect = callPackage ../development/python-modules/schemainspect {};
+
   simple-websocket-server = callPackage ../development/python-modules/simple-websocket-server {};
+
+  sqlbag = callPackage ../development/python-modules/sqlbag {};
 
   stem = callPackage ../development/python-modules/stem { };
 
@@ -3855,6 +3859,8 @@ in {
   h2 = callPackage ../development/python-modules/h2 { };
 
   editorconfig = callPackage ../development/python-modules/editorconfig { };
+
+  migra = callPackage ../development/python-modules/migra { };
 
   mock = callPackage ../development/python-modules/mock { };
 

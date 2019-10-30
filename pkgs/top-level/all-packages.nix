@@ -24557,6 +24557,8 @@ in
 
   pgfplots = callPackage ../tools/typesetting/tex/pgfplots { };
 
+  pgquarrel = callPackage ../tools/misc/pgquarrel { };
+
   physlock = callPackage ../misc/screensavers/physlock { };
 
   pjsip = callPackage ../applications/networking/pjsip { };
