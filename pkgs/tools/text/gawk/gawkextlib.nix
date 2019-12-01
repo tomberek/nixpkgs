@@ -1,7 +1,9 @@
 { stdenv, fetchgit
+, runCommand
 , pkgconfig, autoreconfHook
 , autoconf
 , automake
+, libtool
 , texinfo
 , gettext
 , gawk
@@ -15,23 +17,29 @@
 , postgresql
 , hiredis
 , expat
+, tre
+, makeWrapper
 }:
 
-stdenv.mkDerivation rec {
+let
+extensions = stdenv.mkDerivation rec {
   name = "gawkextlib-unstable-2018-07-20";
 
   src = fetchgit {
     url = "git://git.code.sf.net/p/gawkextlib/code";
-    rev = "9a8454c2d10cc97b529620f19cb696d48a6254fe";
-    sha256 = "04sp1xdwfi2rjxzm1f1sivm0b6sg7l06wc9q9flixfy5qyc7j82q";
+    rev = "f70f10da2804e4fd0a0bac57736e9c1cf21e345d";
+    sha256 = "sha256-M3bBjOp8OrrOosEDScEgJUEFJPYApaC/do3QYRP6DmU=";
   };
 
-  nativeBuildInputs = [ autoconf automake autoreconfHook pkgconfig texinfo gettext
+  nativeBuildInputs = [
+    autoconf automake libtool autoreconfHook pkgconfig
+    texinfo gettext
   ];
 
-  buildInputs = [ gawk rapidjson gd shapelib libharu lmdb gmp mpfr postgresql hiredis expat ];
+  buildInputs = [
+    gawk rapidjson gd shapelib libharu
+    lmdb gmp mpfr postgresql hiredis expat tre ];
 
-  dontConfigure = true;
   postPatch = ''
     cd lib
   '';
@@ -42,20 +50,20 @@ stdenv.mkDerivation rec {
     cp ../lib/gawkextlib.h $out/lib
 
     export LDFLAGS="$LDFLAGS -L$out/lib"
-    declare -a list=("abort" "csv" "errno" "gd" "haru" "json" "lmdb" "mbs" "mpfr" "pgsql" "redis" "select" "xml")
+    declare -a list=("abort" "aregex" "csv" "errno" "gd" "haru" "json" "lmdb" "mbs" "mpfr" "nl_langinfo" "pgsql" "redis" "select" "xml" "timex" )
     for i in "''${list[@]}" ; do
       pushd ../$i
-      autoreconf -i
-      ./configure --with-gawkextlib=$out/lib/
-      make
+      ( autoreconf -i ; \
+      ./configure --with-gawkextlib=$out/lib/ ; \
+      make ; ) &
       popd
     done
+    wait
     pushd ..
-    cp */.libs/* $out/lib
   '';
   installPhase = ''
-    mkdir -p $out/lib
     cp */.libs/* $out/lib
+    ln -s ${gawk}/lib/gawk/* $out/lib/.
     popd
   '';
 
@@ -76,5 +84,16 @@ stdenv.mkDerivation rec {
     platforms = platforms.unix;
     maintainers = with maintainers; [ tomberek ];
   };
-}
+};
+in runCommand "gawk-with-gawkextlib" {
+  nativeBuildInputs = [ makeWrapper ];
+} ''
+  mkdir -p $out/bin
+  for i in ${gawk}/bin/*; do
+    name="$(basename "$i")"
+    makeWrapper $i $out/bin/$name \
+      --set-default AWKLIBPATH ${extensions}/lib
+  done
+''
+
 
