@@ -295,7 +295,8 @@ rec {
     # Docker has a 125-layer maximum, we pick 100 to ensure there is
     # plenty of room for extension.
     # https://github.com/moby/moby/blob/b3e9f7b13b0f0c414fa6253e1f17a86b2cff68b5/layer/layer_store.go#L23-L26
-    maxLayers ? 100
+    maxLayers ? 100,
+    hints ? []
   }:
     let
       storePathToLayer = substituteAll
@@ -309,6 +310,7 @@ rec {
       paths = referencesByPopularity closure;
       nativeBuildInputs = [ jshon rsync tarsum ];
       enableParallelBuilding = true;
+      inherit hints;
     }
     ''
       # Delete impurities for store path layers, so they don't get
@@ -323,15 +325,44 @@ rec {
       # following head and tail call lines, double-check that your
       # code behaves properly when the number of layers equals:
       #      maxLayers-1, maxLayers, and maxLayers+1
-      head -n $((maxLayers - 1)) $paths | cat -n | xargs -P$NIX_BUILD_CORES -n2 ${storePathToLayer}
-      if [ $(cat $paths | wc -l) -ge $maxLayers ]; then
-        tail -n+$maxLayers $paths | xargs ${storePathToLayer} $maxLayers
-      fi
+
+      printf '%s\n' ''${hints[@]} | awk -v paths="$paths" -v ml=$maxLayers -v ps=$(wc -l $paths | cut -f1 -d' ') '
+        BEGIN {
+         print "Trying to fit",ps,"paths into",ml,"layers" > "/dev/stderr"
+        }
+        {
+         prefix = sprintf("%s", ++count)
+         c = $0
+         pathsWritten = 0
+         for(i=0;i<c;i++){
+           if( (getline p < paths ) > 0){
+             printf("%s %s",prefix,p)
+             pathsWritten += 1
+             prefix = ""
+           }
+         }
+         if(pathsWritten != 0){
+           printf "\n"
+         }
+        }
+        END{
+           while( (getline p < paths ) > 0){
+             print ++count, p
+           }
+           if(count > ml){
+             print "Too many layers. Fit",pathsWritten,"paths." > "/dev/stderr"
+             exit 1
+           }
+           fflush()
+           print "Fit",ps,"paths into ",count,"layers" > "/dev/stderr"
+         }
+      ' | tr '\n' '\0' | xargs -0 -n1 -t -P$NIX_BUILD_CORES -I% sh -c "${storePathToLayer} %"
 
       echo "Finished building layer '$name'"
 
       mv ./layers $out
     '';
+}
 
   # Create a "Customisation" layer which adds symlinks at the root of
   # the image to the root paths of the closure. Also add the config
@@ -532,7 +563,8 @@ rec {
     # version of the AUFS graph driver. We pick 24 to ensure there is
     # plenty of room for extension. I believe the actual maximum is
     # 128.
-    maxLayers ? 24
+    maxLayers ? 24,
+    hints ? []
   }:
     let
       baseName = baseNameOf name;
@@ -558,6 +590,7 @@ rec {
           # take up one less.
           maxLayers = maxLayers - 1;
           inherit configJson;
+          inherit hints;
         };
       customisationLayer = mkCustomisationLayer {
           name = baseName;
@@ -566,28 +599,32 @@ rec {
           inherit uid gid extraCommands;
         };
       result = runCommand "docker-image-${baseName}.tar.gz" {
-        nativeBuildInputs = [ pigz coreutils ];
-        passthru.raw = result_raw;
-        passthru.contentsList = let
-          contentsList = if builtins.isList contents then contents else [ contents ];
-        in
-          contentsList;
-
-      } ''
-          echo "Cooking the image..."
-          tar -C ${result_raw}/image --dereference --hard-dereference --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --xform s:'^./':: -c . | ${pigz}/bin/pigz -nT > $out
-      '';
-      result_raw = runCommand "docker-image-${baseName}" {
-        nativeBuildInputs = [ jshon pigz coreutils findutils jq ];
-        # Image name and tag must be lowercase
-        imageName = lib.toLower name;
-        baseJson = configJson;
-        passthru.cooked = result;
+        nativeBuildInputs = [ coreutils pigz result_dir];
+        passthru.dir = result_dir;
         passthru.imageTag =
           if tag == null
           then lib.head (lib.splitString "-" (lib.last (lib.splitString "/" result)))
           else lib.toLower tag;
       } ''
+        echo "Cooking the image..."
+        pushd ${result_dir}
+        tar -C image --dereference --hard-dereference --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0  --mode=a-w --xform s:'^./':: -c . | pigz -nT > $out
+
+        popd
+        echo "Finished."
+      '';
+      result_dir = runCommand "docker-image-${baseName}" {
+        nativeBuildInputs = [ jshon coreutils findutils jq ];
+        # Image name and tag must be lowercase
+        imageName = lib.toLower name;
+        baseJson = configJson;
+        passthru.imageTag =
+          if tag == null
+          then lib.head (lib.splitString "-" (lib.last (lib.splitString "/" result)))
+          else lib.toLower tag;
+      } ''
+        mkdir $out
+        pushd $out
         ${if (tag == null) then ''
           outName="$(basename "$out")"
           outHash=$(echo "$outName" | cut -d - -f 1)
@@ -596,10 +633,6 @@ rec {
         '' else ''
           imageTag="${tag}"
         ''}
-
-        mkdir $out
-        cd $out
-        touch baseFiles
 
         find ${bulkLayers} -mindepth 1 -maxdepth 1 | sort -t/ -k5 -n > layer-list
         echo ${customisationLayer} >> layer-list
@@ -625,10 +658,13 @@ rec {
           -n object -s "$layerID" -i "$imageTag" \
           -i "$imageName" > image/repositories
 
+        popd
+        echo "Built image"
       '';
 
     in
     result;
+
 
   # 1. extract the base image
   # 2. create the layer
