@@ -901,7 +901,7 @@ rec {
 
         mkdir -p nix/var/nix/gcroots/docker/
         for i in ${lib.concatStringsSep " " contentsList}; do
-          ln -s $i nix/var/nix/gcroots/docker/$(basename $i)
+          ln -snf $i nix/var/nix/gcroots/docker/$(basename $i)
         done;
       '' + extraCommands;
     });
