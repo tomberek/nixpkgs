@@ -1,4 +1,6 @@
-{ fetchurl, stdenv, perl, makeWrapper, procps }:
+{ fetchurl, stdenv, perl, makeWrapper, procps,
+  extraPerlPackages ? [] , perlPackages
+}:
 
 stdenv.mkDerivation rec {
   name = "parallel-20191222";
@@ -10,10 +12,12 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ makeWrapper ];
   buildInputs = [ perl procps ];
+  propagatedbuildInputs = extraPerlPackages;
 
-  postInstall = ''
+  postInstall = with perlPackages; ''
     wrapProgram $out/bin/parallel \
-      --prefix PATH : "${stdenv.lib.makeBinPath [ procps perl ]}"
+      --prefix PATH : "${stdenv.lib.makeBinPath [ procps perl ]}" \
+      --set PERL5LIB "${perlPackages.makeFullPerlPath extraPerlPackages}"
   '';
 
   doCheck = true;
@@ -40,6 +44,6 @@ stdenv.mkDerivation rec {
     homepage = https://www.gnu.org/software/parallel/;
     license = licenses.gpl3Plus;
     platforms = platforms.all;
-    maintainers = with maintainers; [ pSub vrthra ];
+    maintainers = with maintainers; [ pSub vrthra tomberek ];
   };
 }
