@@ -1,6 +1,4 @@
-{ fetchurl, stdenv, perl, makeWrapper, procps,
-  extraPerlPackages ? [] , perlPackages
-}:
+{ fetchurl, stdenv, perl, makeWrapper, procps }:
 
 stdenv.mkDerivation rec {
   name = "parallel-20200322";
@@ -14,12 +12,10 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ makeWrapper ];
   buildInputs = [ perl procps ];
-  propagatedbuildInputs = extraPerlPackages;
 
-  postInstall = with perlPackages; ''
+  postInstall = ''
     wrapProgram $out/bin/parallel \
-      --prefix PATH : "${stdenv.lib.makeBinPath [ procps perl ]}" \
-      --set PERL5LIB "${perlPackages.makeFullPerlPath extraPerlPackages}"
+      --prefix PATH : "${stdenv.lib.makeBinPath [ procps perl ]}"
   '';
 
   doCheck = true;
