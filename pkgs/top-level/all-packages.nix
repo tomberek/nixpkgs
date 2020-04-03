@@ -5574,7 +5574,7 @@ in
   parallel = callPackage ../tools/misc/parallel { };
 
   parallel-full = callPackage ../tools/misc/parallel {
-    extraPerlPackages = with perlPackages; [ DBI DBDPg DBDSQLite TextCSV ];
+    extraPerlPackages = with perlPackages; [ DBI DBDPg DBDSQLite DBDCSV TextCSV ];
   };
 
   parastoo-fonts = callPackage ../data/fonts/parastoo-fonts { };
