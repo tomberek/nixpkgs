@@ -1,20 +1,8 @@
 { config, lib, stdenv, fetchurl, pkgs, buildPackages, callPackage
-, enableThreading ? stdenv ? glibc, coreutils, makeWrapper
+, enableThreading ? true, coreutils, makeWrapper
 }:
 
 with lib;
-
-# We can only compile perl with threading on platforms where we have a
-# real glibc in the stdenv.
-#
-# Instead of silently building an unthreaded perl if this is not the
-# case, we force callers to disableThreading explicitly, therefore
-# documenting the platforms where the perl is not threaded.
-#
-# In the case of stdenv linux boot stage1 it's not possible to use
-# threading because of the simpleness of the bootstrap glibc, so we
-# use enableThreading = false there.
-assert enableThreading -> (stdenv ? glibc);
 
 let
 
@@ -96,8 +84,7 @@ let
         "-Dprefix=${placeholder "out"}"
         "-Dman1dir=${placeholder "out"}/share/man/man1"
         "-Dman3dir=${placeholder "out"}/share/man/man3"
-      ]
-      ++ optional (stdenv.isAarch32 || stdenv.isMips) "-Dldflags=\"-lm -lrt\"";
+      ];
 
     configureScript = optionalString (!crossCompiling) "${stdenv.shell} ./Configure";
 

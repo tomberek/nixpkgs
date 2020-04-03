@@ -536,11 +536,6 @@ lib.mapAttrs (n: v: v // { shortName = n; }) {
     fullName  = "University of Illinois/NCSA Open Source License";
   };
 
-  notion_lgpl = {
-    url = "https://raw.githubusercontent.com/raboof/notion/master/LICENSE";
-    fullName = "Notion modified LGPL";
-  };
-
   nposl3 = spdx {
     spdxId = "NPOSL-3.0";
     fullName = "Non-Profit Open Software License 3.0";
@@ -654,6 +649,13 @@ lib.mapAttrs (n: v: v // { shortName = n; }) {
     url = http://metadata.ftp-master.debian.org/changelogs/main/d/debianutils/debianutils_4.8.1_copyright;
   };
 
+  sspl = {
+    shortName = "SSPL";
+    fullName = "Server Side Public License";
+    url = https://www.mongodb.com/licensing/server-side-public-license;
+    free = false;
+  };
+
   tcltk = spdx {
     spdxId = "TCL";
     fullName = "TCL/TK License";
@@ -678,6 +680,11 @@ lib.mapAttrs (n: v: v // { shortName = n; }) {
     fullName = "Unfree redistributable firmware";
     # Note: we currently consider these "free" for inclusion in the
     # channel and NixOS images.
+  };
+
+  unicode-dfs-2016 = spdx {
+    spdxId = "Unicode-DFS-2016";
+    fullName = "Unicode License Agreement - Data Files and Software (2016)";
   };
 
   unlicense = spdx {

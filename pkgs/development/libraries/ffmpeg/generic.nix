@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, addOpenGLRunpath, perl, texinfo, yasm
+{ stdenv, buildPackages, fetchurl, pkgconfig, addOpenGLRunpath, perl, texinfo, yasm
 , alsaLib, bzip2, fontconfig, freetype, gnutls, libiconv, lame, libass, libogg
 , libssh, libtheora, libva, libdrm, libvorbis, libvpx, lzma, libpulseaudio, soxr
 , x264, x265, xvidcore, zlib, libopus, speex, nv-codec-headers, dav1d
@@ -136,7 +136,7 @@ stdenv.mkDerivation rec {
       (ifMinVer "2.1" "--enable-libssh")
       (ifMinVer "0.6" (enableFeature vaapiSupport "vaapi"))
       (ifMinVer "3.4" (enableFeature vaapiSupport "libdrm"))
-      "--enable-vdpau"
+      (enableFeature vdpauSupport "vdpau")
       "--enable-libvorbis"
       (ifMinVer "0.6" (enableFeature vpxSupport "libvpx"))
       (ifMinVer "2.4" "--enable-lzma")
@@ -163,13 +163,15 @@ stdenv.mkDerivation rec {
   ] ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
       "--cross-prefix=${stdenv.cc.targetPrefix}"
       "--enable-cross-compile"
+      "--pkg-config=pkg-config" # Override ffmpeg's ./configure assumption that pkg-config is prefixed by the architecture. (e.g. aarch64-unknown-linux-gnu-pkg-config)
   ] ++ optional stdenv.cc.isClang "--cc=clang");
 
+  depsBuildBuild = [ buildPackages.stdenv.cc ];
   nativeBuildInputs = [ addOpenGLRunpath perl pkgconfig texinfo yasm ];
 
   buildInputs = [
     bzip2 fontconfig freetype gnutls libiconv lame libass libogg libssh libtheora
-    libvdpau libvorbis lzma soxr x264 x265 xvidcore zlib libopus speex nv-codec-headers
+    libvorbis lzma soxr x264 x265 xvidcore zlib libopus speex nv-codec-headers
   ] ++ optionals openglSupport [ libGL libGLU ]
     ++ optional libmfxSupport intel-media-sdk
     ++ optional vpxSupport libaom

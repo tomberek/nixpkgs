@@ -2,10 +2,10 @@
 
 stdenv.mkDerivation rec {
   pname = "leatherman";
-  version = "1.9.1";
+  version = "1.11.0";
 
   src = fetchFromGitHub {
-    sha256 = "1aij0prpf7rvxx25qjf1krf0szb922hq9m6q58p90f5bjgymfzwh";
+    sha256 = "1kp35gnph9myqxdxzyj1871ay19nfajxglzwai1gvsnh5840xnxy";
     rev = version;
     repo = "leatherman";
     owner = "puppetlabs";
@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   meta = with stdenv.lib; {
-    homepage = https://github.com/puppetlabs/leatherman/;
+    homepage = "https://github.com/puppetlabs/leatherman/";
     description = "A collection of C++ and CMake utility libraries";
     license = licenses.asl20;
     maintainers = [ maintainers.womfoo ];

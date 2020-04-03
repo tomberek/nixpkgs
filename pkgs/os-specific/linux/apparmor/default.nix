@@ -18,7 +18,7 @@ let
   apparmor-version = apparmor-series + "." + apparmor-patchver;
 
   apparmor-meta = component: with stdenv.lib; {
-    homepage = http://apparmor.net/;
+    homepage = "https://apparmor.net/";
     description = "A mandatory access control system - ${component}";
     license = licenses.gpl2;
     maintainers = with maintainers; [ phreedom thoughtpolice joachifm ];
@@ -51,6 +51,11 @@ let
     # (alpine patches {1,4,5,6,8} are needed for apparmor 2.11, but not 2.12)
     ] ++ [
       ./cross.patch
+      # Support Python 3.8
+      (fetchpatch {
+        url = https://gitlab.com/apparmor/apparmor/commit/ccbf1e0bf1bf5c3bbab47029fbbc5415ef73bac1.patch;
+        sha256 = "0kfzc0wyjybj38n10yvwakaaqvglalzigd3kk7gcrbp1xdn70pq2";
+      })
     ];
 
   # Set to `true` after the next FIXME gets fixed or this gets some

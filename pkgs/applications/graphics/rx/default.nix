@@ -1,5 +1,5 @@
 { stdenv, rustPlatform, fetchFromGitHub, makeWrapper
-, cmake, pkgconfig
+, cmake, pkg-config
 , xorg ? null
 , libGL ? null }:
 
@@ -7,18 +7,18 @@ with stdenv.lib;
 
 rustPlatform.buildRustPackage rec {
   pname = "rx";
-  version = "0.3.1";
+  version = "0.4.0";
 
   src = fetchFromGitHub {
     owner = "cloudhead";
     repo = pname;
     rev = "v${version}";
-    sha256 = "1byaxbhd3q49473kcdd52rvn3xq7bmy8bdx3pz0jiw96bclzhcgq";
+    sha256 = "1pln65pqy39ijrld11d06klwzfhhzmrgdaxijpx9q7w9z66zmqb8";
   };
 
-  cargoSha256 = "173jfjvdag97f6jvfg366hjk9v3cz301cbzpcahy51rbf1cip1w1";
+  cargoSha256 = "143a5x61s7ywk0ljqd10jkfvs6lrhlibkm2a9lw41wq13mgzb78j";
 
-  nativeBuildInputs = [ cmake pkgconfig makeWrapper ];
+  nativeBuildInputs = [ cmake pkg-config makeWrapper ];
 
   buildInputs = optionals stdenv.isLinux
   (with xorg; [
@@ -37,7 +37,7 @@ rustPlatform.buildRustPackage rec {
 
   meta = {
     description = "Modern and extensible pixel editor implemented in Rust";
-    homepage = "https://cloudhead.io/rx/";
+    homepage = "https://rx.cloudhead.io/";
     license = licenses.gpl3;
     maintainers = with maintainers; [ minijackson filalex77 ];
     platforms = [ "x86_64-linux" ];
