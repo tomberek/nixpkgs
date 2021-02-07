@@ -672,7 +672,7 @@ self: super:
      By default nix-gc will now run immediately if it would have been triggered at least
      once during the time when the timer was inactive.
     </para>
-   </listitem
+   </listitem>
    <listitem>
     <para>
      <literal>isync</literal>: The <literal>isync</literal> compatibility wrapper was removed and the Master/Slave
