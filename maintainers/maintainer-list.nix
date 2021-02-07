@@ -868,6 +868,12 @@
     githubId = 706854;
     name = "Etienne Laurin";
   };
+  attila-lendvai = {
+    name = "Attila Lendvai";
+    email = "attila@lendvai.name";
+    github = "attila-lendvai";
+    githubId = 840345;
+  };
   auntie = {
     email = "auntieNeo@gmail.com";
     github = "auntieNeo";
@@ -3153,6 +3159,12 @@
     githubId = 92793;
     name = "Friedrich von Never";
   };
+  fortuneteller2k = {
+    email = "lythe1107@gmail.com";
+    github = "fortuneteller2k";
+    githubId = 20619776;
+    name = "fortuneteller2k";
+  };
   fpletz = {
     email = "fpletz@fnordicwalking.de";
     github = "fpletz";
@@ -3717,6 +3729,12 @@
       fingerprint = "78C2 E81C 828A 420B 269A  EBC1 49FA 39F8 A7F7 35F9";
     }];
   };
+  humancalico = {
+    email = "humancalico@disroot.org";
+    github = "humancalico";
+    githubId = 51334444;
+    name = "Akshat Agarwal";
+  };
   hodapp = {
     email = "hodapp87@gmail.com";
     github = "Hodapp87";
@@ -3740,6 +3758,12 @@
     github = "hoverbear";
     githubId = 130903;
     name = "Ana Hobden";
+  };
+  holgerpeters = {
+    name = "Holger Peters";
+    email = "holger.peters@posteo.de";
+    github = "HolgerPeters";
+    githubId = 4097049;
   };
   hrdinka = {
     email = "c.nix@hrdinka.at";
@@ -5250,6 +5274,12 @@
     githubId = 307589;
     name = "Nathaniel Baxter";
   };
+  liamdiprose = {
+    email = "liam@liamdiprose.com";
+    github = "liamdiprose";
+    githubId = 1769386;
+    name = "Liam Diprose";
+  };
   liff = {
     email = "liff@iki.fi";
     github = "liff";
@@ -5531,6 +5561,12 @@
     github = "lolwat97";
     githubId = 2057309;
     name = "Sergey Sofeychuk";
+  };
+  lxea = {
+    email = "nix@amk.ie";
+    github = "lxea";
+    githubId = 7910815;
+    name = "Alex McGrath";
   };
   lynty = {
     email = "ltdong93+nix@gmail.com";
@@ -6698,6 +6734,12 @@
     github = "nomeata";
     githubId = 148037;
     name = "Joachim Breitner";
+  };
+  nomisiv = {
+    email = "simon@nomisiv.com";
+    github = "NomisIV";
+    githubId = 47303199;
+    name = "Simon Gutgesell";
   };
   noneucat = {
     email = "andy@lolc.at";
@@ -8417,6 +8459,12 @@
     githubId = 997855;
     name = "Narazaki Shuji";
   };
+  shofius = {
+    name = "Sam Hofius";
+    email = "sam@samhofi.us";
+    github = "kf5grd";
+    githubId = 18297490;
+  };
   shou = {
     email = "x+g@shou.io";
     github = "Shou";
@@ -8654,6 +8702,12 @@
     github = "spacekookie";
     githubId = 7669898;
     name = "Katharina Fey";
+  };
+  spease = {
+    email = "peasteven@gmail.com";
+    github = "spease";
+    githubId = 2825204;
+    name = "Steven Pease";
   };
   spencerjanssen = {
     email = "spencerjanssen@gmail.com";

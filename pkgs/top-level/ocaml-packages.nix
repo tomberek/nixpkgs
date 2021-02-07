@@ -975,14 +975,11 @@ let
 
     ppx_blob = callPackage ../development/ocaml-modules/ppx_blob { };
 
-    ppx_cstruct = callPackage ../development/ocaml-modules/cstruct/ppx.nix {};
+    ppx_cstruct = callPackage ../development/ocaml-modules/cstruct/ppx.nix { };
 
     ppx_derivers = callPackage ../development/ocaml-modules/ppx_derivers {};
 
-    ppx_deriving =
-      if lib.versionAtLeast ocaml.version "4.02"
-      then callPackage ../development/ocaml-modules/ppx_deriving {}
-      else null;
+    ppx_deriving = callPackage ../development/ocaml-modules/ppx_deriving {};
 
     ppx_deriving_protobuf = callPackage ../development/ocaml-modules/ppx_deriving_protobuf {};
 
@@ -1055,6 +1052,8 @@ let
     sedlex = callPackage ../development/ocaml-modules/sedlex { };
 
     sedlex_2 = callPackage ../development/ocaml-modules/sedlex/2.nix { };
+
+    semaphore-compat = callPackage ../development/ocaml-modules/semaphore-compat { };
 
     sodium = callPackage ../development/ocaml-modules/sodium { };
 
