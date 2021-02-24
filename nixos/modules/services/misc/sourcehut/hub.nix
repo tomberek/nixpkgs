@@ -103,11 +103,16 @@ in
       "hub.sr.ht".oauth-client-secret = mkDefault null;
     };
 
-    services.nginx.virtualHosts."hub.${cfg.originBase}" = {
-      forceSSL = true;
-      locations."/".proxyPass = "http://${cfg.address}:${toString port}";
-      locations."/query".proxyPass = "http://${cfg.address}:${toString (port + 100)}";
-      locations."/static".root = "${pkgs.sourcehut.hubsrht}/${pkgs.sourcehut.python.sitePackages}/hubsrht";
+    services.nginx.virtualHosts = with builtins; let
+      address = elemAt (builtins.split "://" cfg.settings."hub.sr.ht".origin) 2;
+    in
+    {
+      "${address}" = {
+        forceSSL = true;
+        locations."/".proxyPass = "http://${cfg.address}:${toString port}";
+        locations."/query".proxyPass = "http://${cfg.address}:${toString (port + 100)}";
+        locations."/static".root = "${pkgs.sourcehut.hubsrht}/${pkgs.sourcehut.python.sitePackages}/hubsrht";
+      };
     };
   };
 }

@@ -163,11 +163,16 @@ in
     };
 
     # TODO: requires testing and addition of hg-specific requirements
-    services.nginx.virtualHosts."hg.${cfg.originBase}" = {
-      forceSSL = true;
-      locations."/".proxyPass = "http://${cfg.address}:${toString port}";
-      locations."/query".proxyPass = "http://${cfg.address}:${toString (port + 100)}";
-      locations."/static".root = "${pkgs.sourcehut.hgsrht}/${pkgs.sourcehut.python.sitePackages}/hgsrht";
+    services.nginx.virtualHosts = with builtins; let
+      address = elemAt (builtins.split "://" cfg.settings."hg.sr.ht".origin) 2;
+    in
+    {
+      "${address}" = {
+        forceSSL = true;
+        locations."/".proxyPass = "http://${cfg.address}:${toString port}";
+        locations."/query".proxyPass = "http://${cfg.address}:${toString (port + 100)}";
+        locations."/static".root = "${pkgs.sourcehut.hgsrht}/${pkgs.sourcehut.python.sitePackages}/hgsrht";
+      };
     };
   };
 }

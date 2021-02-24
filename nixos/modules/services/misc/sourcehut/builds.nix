@@ -200,18 +200,23 @@ in
       "builds.sr.ht::worker".timeout = mkDefault "3m";
     };
 
-    services.nginx.virtualHosts."logs.sr.ht" =
-      if scfg.enableWorker then {
-        listen = with builtins; let address = split ":" cfg.settings."builds.sr.ht::worker".name;
-        in [{ addr = elemAt address 0; port = lib.toInt (elemAt address 2); }];
-        locations."/logs".root = "${scfg.statePath}";
-      } else { };
-
-    services.nginx.virtualHosts."builds.${cfg.originBase}" = {
-      forceSSL = true;
-      locations."/".proxyPass = "http://${cfg.address}:${toString port}";
-      locations."/query".proxyPass = "http://${cfg.address}:${toString (port + 100)}";
-      locations."/static".root = "${pkgs.sourcehut.buildsrht}/${pkgs.sourcehut.python.sitePackages}/buildsrht";
+    services.nginx.virtualHosts = with builtins; let
+      address = elemAt (builtins.split "://" cfg.settings."builds.sr.ht".origin) 2;
+    in
+    {
+      "${address}" = {
+        forceSSL = true;
+        locations."/".proxyPass = "http://${cfg.address}:${toString port}";
+        locations."/query".proxyPass = "http://${cfg.address}:${toString (port + 100)}";
+        locations."/static".root = "${pkgs.sourcehut.buildsrht}/${pkgs.sourcehut.python.sitePackages}/buildsrht";
+      };
+      "logs.sr.ht" =
+        if scfg.enableWorker then {
+          listen =
+            let address = split ":" cfg.settings."builds.sr.ht::worker".name;
+            in [{ addr = elemAt address 0; port = lib.toInt (elemAt address 2); }];
+          locations."/logs".root = "${scfg.statePath}";
+        } else { };
     };
   };
 }

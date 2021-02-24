@@ -200,11 +200,16 @@ in
       "meta.sr.ht::billing".stripe-secret-key = mkDefault null;
     };
 
-    services.nginx.virtualHosts."meta.${cfg.originBase}" = {
-      forceSSL = true;
-      locations."/".proxyPass = "http://${cfg.address}:${toString port}";
-      locations."/query".proxyPass = "http://${cfg.address}:${toString (port + 100)}";
-      locations."/static".root = "${pkgs.sourcehut.metasrht}/${pkgs.sourcehut.python.sitePackages}/metasrht";
+    services.nginx.virtualHosts = with builtins; let
+      address = elemAt (builtins.split "://" cfg.settings."meta.sr.ht".origin) 2;
+    in
+    {
+      "${address}" = {
+        forceSSL = true;
+        locations."/".proxyPass = "http://${cfg.address}:${toString port}";
+        locations."/query".proxyPass = "http://${cfg.address}:${toString (port + 100)}";
+        locations."/static".root = "${pkgs.sourcehut.metasrht}/${pkgs.sourcehut.python.sitePackages}/metasrht";
+      };
     };
   };
 }
