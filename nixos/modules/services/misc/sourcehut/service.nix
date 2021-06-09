@@ -29,8 +29,7 @@ with serviceCfg; with lib; recursiveUpdate
 
   preStart = ''
     if ! test -e ${statePath}/db; then
-      # Setup the initial database
-      ${setupDB}
+      ${cfg.python}/bin/${serviceDrv.pname}-initdb
 
       # Set the initial state of the database for future database upgrades
       if test -e ${cfg.python}/bin/${serviceDrv.pname}-migrate; then
@@ -43,9 +42,10 @@ with serviceCfg; with lib; recursiveUpdate
 
     # Update copy of each users' profile to the latest
     # See https://lists.sr.ht/~sircmpwn/sr.ht-admins/<20190302181207.GA13778%40cirno.my.domain>
+    # Broken for builds due to buildsrht builds.sr.ht confusion
     if ! test -e ${statePath}/webhook; then
       # Update ${iniKey}'s users' profile copy to the latest
-      ${cfg.python}/bin/srht-update-profiles ${iniKey}
+      ${cfg.python}/bin/srht-update-profiles ${iniKey} || true
 
       touch ${statePath}/webhook
     fi

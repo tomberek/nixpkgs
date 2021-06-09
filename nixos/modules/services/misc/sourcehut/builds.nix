@@ -150,8 +150,7 @@ in
 
             serviceConfig.ExecStart = "${cfg.python}/bin/gunicorn ${drv.pname}.app:app -b ${cfg.address}:${toString port}";
 
-            # Hack to bypass this hack: https://git.sr.ht/~sircmpwn/core.sr.ht/tree/master/item/srht-update-profiles#L6
-          } // { preStart = " "; };
+          };
 
         buildsrht-worker = {
           enable = scfg.enableWorker;
