@@ -32869,4 +32869,19 @@ with pkgs;
   zthrottle = callPackage ../tools/misc/zthrottle { };
 
   zktree = callPackage ../applications/misc/zktree {};
+
+  pkgsMerge = let
+    gen = attr: selected: pkgs.buildEnv {
+      name=attr;
+      ignoreCollisions = true;
+      paths = selected;
+      manifest = "manifest.txt";
+      # Use lists not attrsets because order matters
+      passthru = builtins.mapAttrs (n: v:
+        gen (if builtins.length selected > 5
+          then "merged-environment"
+          else attr + "-${n}") (selected ++ [v])
+      ) pkgs;
+    };
+  in gen "merged" [];
 }
