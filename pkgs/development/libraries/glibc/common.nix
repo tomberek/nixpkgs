@@ -30,6 +30,7 @@
 , libidn2
 , bison
 , python3Minimal
+, substituteAll
 }:
 
 { pname
@@ -125,6 +126,13 @@ stdenv.mkDerivation ({
 
       /* https://github.com/NixOS/nixpkgs/pull/137601 */
       ./nix-nss-open-files.patch
+
+      (substituteAll {
+        src = ./dl-cache.patch;
+        preInstall = ''
+          export nixStoreDir="$NIX_STORE"
+        '';
+      })
     ]
     ++ lib.optional stdenv.hostPlatform.isMusl ./fix-rpc-types-musl-conflicts.patch
     ++ lib.optional stdenv.buildPlatform.isDarwin ./darwin-cross-build.patch;

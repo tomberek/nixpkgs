@@ -16,7 +16,11 @@ patchELF() {
         if ! isELF "$i"; then continue; fi
         echo "shrinking $i"
         patchelf --shrink-rpath "$i" || true
+
     done < <(find "$dir" -type f -print0)
+    mkdir "$dir/etc" 2>/dev/null || true
+    ldconfig -C "$dir/etc/ld.so.cache" -i "$dir/bin" "$dir/lib" || true
+    rmdir "$dir"/etc 2>/dev/null || true
 
     stopNest
 }
