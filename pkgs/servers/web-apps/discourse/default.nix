@@ -4,7 +4,9 @@
 , ruby, replace, gzip, gnutar, git, cacert, util-linux, gawk, nettools
 , imagemagick, optipng, pngquant, libjpeg, jpegoptim, gifsicle, jhead
 , libpsl, redis, postgresql, which, brotli, procps, rsync, icu
-, nodePackages, nodejs-16_x
+, nodePackages, nodejs-16_x, oxipng
+,mkYarnPackage
+, yarn2nix-moretea
 
 , plugins ? []
 }@args:
@@ -156,6 +158,50 @@ let
       "default" "assets" "development" "test"
     ];
   };
+
+  emberAssets2 = let
+    dream2nixlib = builtins.getFlake "github:nix-community/dream2nix/c7411e67beef558b32c191293bd4e8dea2832e92";
+    source = fetchFromGitHub {
+      owner = "tomberek";
+      repo = "discourse";
+      rev = "nix";
+      sha256 = "sha256-IrZevtnzpDIY6BQXMl5JCL2aRtpr18fOj3O65XTCLLc=";
+    };
+      dream2nix = dream2nixlib.lib2.init {
+        # modify according to your supported systems
+        systems = [ "x86_64-linux" ];
+        config.projectRoot = source; # + "/app/assets/javascripts/discourse";
+      };
+    in dream2nix.makeFlakeOutputs {
+      pname = "discourse";
+      source = source; # + "/app/assets/javascripts/discourse";
+      packageOverrides = {
+              discourse.build = {
+                  nativeBuildInputs = [pkgs.yarn];
+                  buildPhase = ''
+                    yarn --offline --cwd app/assets/javascripts/discourse
+                  '';
+              };
+          };
+    };
+
+  emberAssets = (yarn2nix-moretea.mkYarnWorkspace {
+    pname = "ember-assets";
+    src = src + "/app/assets/javascripts";
+    buildPhase = ''
+      yarn --offline run ember build -prod
+    '';
+    #distPhase = ":";
+  }).discourse;
+  # assets2 = mkYarnPackage {
+  #   pname = "ember-cli";
+  #   inherit src;
+  #   packageJSON = src + "/package.json";
+  #   yarnLock = src + "/app/assets/javascripts/yarn.lock";
+  #   yarnNix = ./workspace-yarn.nix;
+  #   yarnFlags = ["--offline"];
+  #   distPhase = ":";
+  # };
 
   assets = stdenv.mkDerivation {
     pname = "discourse-assets";
@@ -309,7 +355,7 @@ let
     };
 
     passthru = {
-      inherit rubyEnv runtimeEnv runtimeDeps rake mkDiscoursePlugin;
+      inherit rubyEnv runtimeEnv runtimeDeps rake mkDiscoursePlugin assets emberAssets;
       enabledPlugins = plugins;
       plugins = callPackage ./plugins/all-plugins.nix { inherit mkDiscoursePlugin; };
       ruby = rubyEnv.wrappedRuby;
