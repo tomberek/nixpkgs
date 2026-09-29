@@ -152,14 +152,98 @@
         grep "^old_library='''" $out/lib/libFoo.la
       '';
     };
-  reproducible-builds = stdenv.mkDerivation {
-    name = "test-reproducible-builds";
-    buildCommand = ''
-      # can't be tested more precisely because the value of random-seed changes depending on the output
-      [[ $NIX_CFLAGS_COMPILE =~ "-frandom-seed=" ]]
-      touch $out
-    '';
-  };
+  # cc-wrapper injects -frandom-seed= itself now (not via NIX_CFLAGS_COMPILE,
+  # and not derived from $out -- see cc-wrapper.sh). Prove the three
+  # properties that motivated that redesign, using the compiler driver's
+  # own `-###` dry-run (unexecuted, but shows the exact args that would be
+  # passed) the same way pkgs/development/compilers/llvm/common/flang's
+  # driver-flags test proves the flag's *absence* for Flang.
+  random-seed =
+    let
+      capture =
+        {
+          nameSuffix,
+          pname,
+          files,
+        }:
+        stdenv.mkDerivation {
+          name = "test-random-seed-capture-${nameSuffix}";
+          inherit pname;
+          buildCommand = ''
+            ${lib.concatMapStringsSep "\n" (f: ''
+              mkdir -p "$(dirname ${f})"
+              echo 'int x;' > ${f}
+            '') files}
+            for f in ${lib.concatStringsSep " " files}; do
+              $CC -### -c "$f" -o "$(basename "$f").o" 2>> log.txt || true
+            done
+            grep -o -- '-frandom-seed=[^ "]*' log.txt | sort -u > $out
+          '';
+        };
+
+      assertDistinct = a: b: ''
+        if diff -q ${a} ${b} > /dev/null; then
+          echo "expected different -frandom-seed for ${a} vs ${b}, got the same:" >&2
+          cat ${a} >&2
+          exit 1
+        fi
+      '';
+      assertSame = a: b: ''
+        if ! diff -q ${a} ${b} > /dev/null; then
+          echo "expected identical -frandom-seed for ${a} vs ${b}, got different:" >&2
+          diff ${a} ${b} >&2 || true
+          exit 1
+        fi
+      '';
+
+      # Per-TU distinctness: same pname, different source files.
+      perTuA = capture {
+        nameSuffix = "per-tu-a";
+        pname = "test-random-seed-proj";
+        files = [ "a.c" ];
+      };
+      perTuB = capture {
+        nameSuffix = "per-tu-b";
+        pname = "test-random-seed-proj";
+        files = [ "b.c" ];
+      };
+
+      # Cross-build ($out) stability: same pname, same source path, but a
+      # different derivation name (hence different $out) -- must match.
+      crossOutA = capture {
+        nameSuffix = "cross-out-a";
+        pname = "test-random-seed-stable";
+        files = [ "same.c" ];
+      };
+      crossOutB = capture {
+        nameSuffix = "cross-out-b-with-a-longer-distinguishing-suffix";
+        pname = "test-random-seed-stable";
+        files = [ "same.c" ];
+      };
+
+      # Cross-project non-collision: different pname, identical relative
+      # source path -- must differ (the regression test for the bug that
+      # motivated mixing pname into the seed instead of hashing path alone).
+      collideA = capture {
+        nameSuffix = "collide-a";
+        pname = "test-random-seed-projA";
+        files = [ "src/main.c" ];
+      };
+      collideB = capture {
+        nameSuffix = "collide-b";
+        pname = "test-random-seed-projB";
+        files = [ "src/main.c" ];
+      };
+    in
+    stdenv.mkDerivation {
+      name = "test-random-seed";
+      buildCommand = ''
+        ${assertDistinct perTuA perTuB}
+        ${assertSame crossOutA crossOutB}
+        ${assertDistinct collideA collideB}
+        touch $out
+      '';
+    };
   set-source-date-epoch-to-latest = stdenv.mkDerivation {
     name = "test-set-source-date-epoch-to-latest";
     buildCommand = ''

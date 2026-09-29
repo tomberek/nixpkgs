@@ -17,17 +17,16 @@
 with pkgs;
 # rebuild gcc using the "final" stdenv
 let
-  gcc-stageCompare =
-    (gcc-unwrapped.override {
-      reproducibleBuild = true;
-      profiledCompiler = false;
-      stdenv = overrideCC stdenv (wrapCCWith {
-        cc = stdenv.cc;
-      });
-    }).overrideAttrs
-      (_: {
-        NIX_OUTPATH_USED_AS_RANDOM_SEED = stdenv.cc.cc.out;
-      });
+  # No NIX_OUTPATH_USED_AS_RANDOM_SEED override needed: -frandom-seed is no
+  # longer derived from $out, so this rebuild (different $out, same source
+  # and pname) already produces identical checksums without pinning.
+  gcc-stageCompare = gcc-unwrapped.override {
+    reproducibleBuild = true;
+    profiledCompiler = false;
+    stdenv = overrideCC stdenv (wrapCCWith {
+      cc = stdenv.cc;
+    });
+  };
 in
 
 (runCommand "gcc-stageCompare"

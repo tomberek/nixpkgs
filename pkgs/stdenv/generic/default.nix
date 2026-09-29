@@ -27,7 +27,6 @@ let
     ../../build-support/setup-hooks/multiple-outputs.sh
     ../../build-support/setup-hooks/patch-shebangs.sh
     ../../build-support/setup-hooks/prune-libtool-files.sh
-    ../../build-support/setup-hooks/reproducible-builds.sh
     ../../build-support/setup-hooks/set-source-date-epoch-to-latest.sh
     ../../build-support/setup-hooks/strip.sh
   ];

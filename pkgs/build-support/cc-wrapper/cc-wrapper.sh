@@ -35,6 +35,7 @@ cInclude=1
 expandResponseParams "$@"
 
 declare -ag positionalArgs=()
+declare -ag sourceFileCandidates=()
 declare -i n=0
 nParams=${#params[@]}
 while (( "$n" < "$nParams" )); do
@@ -68,7 +69,24 @@ while (( "$n" < "$nParams" )); do
             break;
             ;;
         -?*) ;;
+        *.c | *.cc | *.cxx | *.cpp | *.c++ | *.C | *.i | *.ii | *.m | *.mm | *.M | *.s | *.S)
+            nonFlagArgs=1
+            # Basename, not the full path: sandboxed vs. unsandboxed builds
+            # (and build-system-internal mktemp scratch dirs) can differ in
+            # directory structure but not in source filenames.
+            sourceFileCandidates+=("${p##*/}")
+            ;;
         *) nonFlagArgs=1 ;; # Includes a solitary dash (`-`) which signifies standard input; it is not a flag
+    esac
+done
+
+# `--`-separated positional args are scanned for source files the same way,
+# since the case arms above never see them (the loop breaks at `--`).
+for p in ${positionalArgs+"${positionalArgs[@]}"}; do
+    case "$p" in
+        *.c | *.cc | *.cxx | *.cpp | *.c++ | *.C | *.i | *.ii | *.m | *.mm | *.M | *.s | *.S)
+            sourceFileCandidates+=("${p##*/}")
+            ;;
     esac
 done
 
@@ -185,17 +203,30 @@ fi
 
 source @out@/nix-support/add-hardening.sh
 
-# Add the flags for the compiler proper. Flang reads its user-supplied
-# flags from the Fortran-specific NIX_FFLAGS_COMPILE channel so that
-# C-only flags injected by setup hooks (e.g. -frandom-seed= from
-# reproducible-builds.sh, which Flang does not accept) never reach the
-# Fortran driver. This mirrors the NIX_GNATFLAGS_COMPILE channel that
-# the Ada/GNAT wrapper uses for the same reason.
+# Add the flags for the compiler proper. Flang doesn't accept -frandom-seed=
+# (computed below), so it reads user flags from NIX_FFLAGS_COMPILE instead
+# of NIX_CFLAGS_COMPILE -- same reasoning as the Ada/GNAT wrapper's
+# NIX_GNATFLAGS_COMPILE channel.
 if [ "@isFlang@" = 1 ]; then
     extraAfter=(${hardeningCFlagsAfter[@]+"${hardeningCFlagsAfter[@]}"} $NIX_FFLAGS_COMPILE_@suffixSalt@)
     extraBefore=(${hardeningCFlagsBefore[@]+"${hardeningCFlagsBefore[@]}"} $NIX_FFLAGS_COMPILE_BEFORE_@suffixSalt@)
 else
-    extraAfter=(${hardeningCFlagsAfter[@]+"${hardeningCFlagsAfter[@]}"} $NIX_CFLAGS_COMPILE_@suffixSalt@)
+    # -frandom-seed=: per-TU symbol/coverage-stamp seed. Not derived from
+    # $out (would defeat ccache on unrelated rebuilds) or file content
+    # (would cost a read+hash on every invocation, hit or miss). proj must
+    # never end up empty -- pname/name aren't always exported (e.g. under
+    # __structuredAttrs) and some compiler probes have no source file --
+    # since GCC hard-errors on a bare "-frandom-seed=".
+    proj=${pname:-${name:-nix-cc-wrapper}}
+    case "${#sourceFileCandidates[@]}" in
+        0) randomSeed=$proj ;;
+        1) randomSeed="$proj:${sourceFileCandidates[0]}" ;;
+        *)
+            sortedSources=$(printf '%s\n' "${sourceFileCandidates[@]}" | LC_ALL=C sort | tr '\n' ':')
+            randomSeed="$proj:$sortedSources"
+            ;;
+    esac
+    extraAfter=(${hardeningCFlagsAfter[@]+"${hardeningCFlagsAfter[@]}"} $NIX_CFLAGS_COMPILE_@suffixSalt@ "-frandom-seed=$randomSeed")
     extraBefore=(${hardeningCFlagsBefore[@]+"${hardeningCFlagsBefore[@]}"} $NIX_CFLAGS_COMPILE_BEFORE_@suffixSalt@)
 fi
 
