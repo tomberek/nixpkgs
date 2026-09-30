@@ -170,6 +170,13 @@
           name = "test-random-seed-capture-${nameSuffix}";
           inherit pname;
           buildCommand = ''
+            # Compile from a synthetic root one level below $NIX_BUILD_TOP,
+            # mimicking setup.sh's `cd -- "$sourceRoot"` transition after
+            # unpacking, so this exercises cc-wrapper.sh's real
+            # component-stripping behavior instead of the degenerate
+            # zero-level ($NIX_BUILD_TOP itself) case.
+            mkdir -p root
+            cd root
             ${lib.concatMapStringsSep "\n" (f: ''
               mkdir -p "$(dirname ${f})"
               echo 'int x;' > ${f}
@@ -234,6 +241,35 @@
         pname = "test-random-seed-projB";
         files = [ "src/main.c" ];
       };
+
+      # Same basename, different subdirectories, same pname -- the direct
+      # regression test for the same-basename-different-subdir tradeoff
+      # that sourceSeedPath()'s relative-path recovery removes (a
+      # basename-only seed would collide these two).
+      subdirA = capture {
+        nameSuffix = "subdir-a";
+        pname = "test-random-seed-subdir";
+        files = [ "dirA/same.c" ];
+      };
+      subdirB = capture {
+        nameSuffix = "subdir-b";
+        pname = "test-random-seed-subdir";
+        files = [ "dirB/same.c" ];
+      };
+
+      # Nested cross-$out stability: same as crossOutA/B but through a real
+      # subdirectory, proving component-stripping doesn't reintroduce
+      # $out-sensitivity for nested files specifically.
+      crossOutNestedA = capture {
+        nameSuffix = "cross-out-nested-a";
+        pname = "test-random-seed-stable-nested";
+        files = [ "src/nested/same.c" ];
+      };
+      crossOutNestedB = capture {
+        nameSuffix = "cross-out-nested-b-with-a-longer-distinguishing-suffix";
+        pname = "test-random-seed-stable-nested";
+        files = [ "src/nested/same.c" ];
+      };
     in
     stdenv.mkDerivation {
       name = "test-random-seed";
@@ -241,6 +277,8 @@
         ${assertDistinct perTuA perTuB}
         ${assertSame crossOutA crossOutB}
         ${assertDistinct collideA collideB}
+        ${assertDistinct subdirA subdirB}
+        ${assertSame crossOutNestedA crossOutNestedB}
         touch $out
       '';
     };

@@ -34,6 +34,34 @@ cInclude=1
 
 expandResponseParams "$@"
 
+# Path relative to the unpacked source tree, when derivable, for a richer
+# -frandom-seed= than plain basename; falls back to basename otherwise.
+# $NIX_BUILD_TOP is a real builder-set process env var (unlike pname/name,
+# unaffected by __structuredAttrs) -- see wrapper-common/utils.bash's
+# badPath, which already relies on the same prefix for impure-path checks.
+#
+# Strips $NIX_BUILD_TOP/ (fixes sandboxed-vs-unsandboxed prefix drift) and
+# exactly one more path component (typically the version/fetcher-tainted
+# extraction directory name from unpacking) -- correct for the common
+# single-src autodetected-sourceRoot case. Known gaps, not handled: a
+# custom sourceRoot with 2+ tainted components, or a multi-src build where
+# a file is reached via a sibling ../other-src/... path (strips the wrong
+# component in that case). Both degrade no worse than under-stripping --
+# never to $out-sensitivity or a crash.
+sourceSeedPath() {
+    local p=$1 abs
+    case "$p" in
+        /*) abs=$p ;;
+        *)  abs="$PWD/$p" ;;
+    esac
+    if [[ -n "${NIX_BUILD_TOP:-}" && "${abs#"$NIX_BUILD_TOP"/}" != "$abs" ]]; then
+        local rest=${abs#"$NIX_BUILD_TOP"/}
+        echo "${rest#*/}"
+    else
+        echo "${p##*/}"
+    fi
+}
+
 declare -ag positionalArgs=()
 declare -ag sourceFileCandidates=()
 declare -i n=0
@@ -71,10 +99,7 @@ while (( "$n" < "$nParams" )); do
         -?*) ;;
         *.c | *.cc | *.cxx | *.cpp | *.c++ | *.C | *.i | *.ii | *.m | *.mm | *.M | *.s | *.S)
             nonFlagArgs=1
-            # Basename, not the full path: sandboxed vs. unsandboxed builds
-            # (and build-system-internal mktemp scratch dirs) can differ in
-            # directory structure but not in source filenames.
-            sourceFileCandidates+=("${p##*/}")
+            sourceFileCandidates+=("$(sourceSeedPath "$p")")
             ;;
         *) nonFlagArgs=1 ;; # Includes a solitary dash (`-`) which signifies standard input; it is not a flag
     esac
@@ -85,7 +110,7 @@ done
 for p in ${positionalArgs+"${positionalArgs[@]}"}; do
     case "$p" in
         *.c | *.cc | *.cxx | *.cpp | *.c++ | *.C | *.i | *.ii | *.m | *.mm | *.M | *.s | *.S)
-            sourceFileCandidates+=("${p##*/}")
+            sourceFileCandidates+=("$(sourceSeedPath "$p")")
             ;;
     esac
 done
@@ -213,10 +238,13 @@ if [ "@isFlang@" = 1 ]; then
 else
     # -frandom-seed=: per-TU symbol/coverage-stamp seed. Not derived from
     # $out (would defeat ccache on unrelated rebuilds) or file content
-    # (would cost a read+hash on every invocation, hit or miss). proj must
-    # never end up empty -- pname/name aren't always exported (e.g. under
-    # __structuredAttrs) and some compiler probes have no source file --
-    # since GCC hard-errors on a bare "-frandom-seed=".
+    # (would cost a read+hash on every invocation, hit or miss). Each
+    # candidate is a source-tree-relative path when sourceSeedPath() can
+    # derive one, basename otherwise -- see that function for exactly what
+    # it can and can't recover. proj must never end up empty -- pname/name
+    # aren't always exported (e.g. under __structuredAttrs) and some
+    # compiler probes have no source file -- since GCC hard-errors on a
+    # bare "-frandom-seed=".
     proj=${pname:-${name:-nix-cc-wrapper}}
     case "${#sourceFileCandidates[@]}" in
         0) randomSeed=$proj ;;
