@@ -215,17 +215,19 @@
         files = [ "b.c" ];
       };
 
-      # Cross-build ($out) stability: same pname, same source path, but a
-      # different derivation name (hence different $out) -- must match.
+      # Cross-build ($out) stability: same pname, same nested source path,
+      # but a different derivation name (hence different $out) -- must
+      # match. Nested (not flat) so this exercises real component-stripping
+      # rather than degrading to the basename-only case.
       crossOutA = capture {
         nameSuffix = "cross-out-a";
         pname = "test-random-seed-stable";
-        files = [ "same.c" ];
+        files = [ "src/nested/same.c" ];
       };
       crossOutB = capture {
         nameSuffix = "cross-out-b-with-a-longer-distinguishing-suffix";
         pname = "test-random-seed-stable";
-        files = [ "same.c" ];
+        files = [ "src/nested/same.c" ];
       };
 
       # Cross-project non-collision: different pname, identical relative
@@ -256,20 +258,6 @@
         pname = "test-random-seed-subdir";
         files = [ "dirB/same.c" ];
       };
-
-      # Nested cross-$out stability: same as crossOutA/B but through a real
-      # subdirectory, proving component-stripping doesn't reintroduce
-      # $out-sensitivity for nested files specifically.
-      crossOutNestedA = capture {
-        nameSuffix = "cross-out-nested-a";
-        pname = "test-random-seed-stable-nested";
-        files = [ "src/nested/same.c" ];
-      };
-      crossOutNestedB = capture {
-        nameSuffix = "cross-out-nested-b-with-a-longer-distinguishing-suffix";
-        pname = "test-random-seed-stable-nested";
-        files = [ "src/nested/same.c" ];
-      };
     in
     stdenv.mkDerivation {
       name = "test-random-seed";
@@ -278,7 +266,6 @@
         ${assertSame crossOutA crossOutB}
         ${assertDistinct collideA collideB}
         ${assertDistinct subdirA subdirB}
-        ${assertSame crossOutNestedA crossOutNestedB}
         touch $out
       '';
     };

@@ -236,15 +236,13 @@ if [ "@isFlang@" = 1 ]; then
     extraAfter=(${hardeningCFlagsAfter[@]+"${hardeningCFlagsAfter[@]}"} $NIX_FFLAGS_COMPILE_@suffixSalt@)
     extraBefore=(${hardeningCFlagsBefore[@]+"${hardeningCFlagsBefore[@]}"} $NIX_FFLAGS_COMPILE_BEFORE_@suffixSalt@)
 else
-    # -frandom-seed=: per-TU symbol/coverage-stamp seed. Not derived from
+    # -frandom-seed=: per-TU symbol/coverage-stamp seed, built from each
+    # candidate's sourceSeedPath() (see above) plus proj. Not derived from
     # $out (would defeat ccache on unrelated rebuilds) or file content
-    # (would cost a read+hash on every invocation, hit or miss). Each
-    # candidate is a source-tree-relative path when sourceSeedPath() can
-    # derive one, basename otherwise -- see that function for exactly what
-    # it can and can't recover. proj must never end up empty -- pname/name
-    # aren't always exported (e.g. under __structuredAttrs) and some
-    # compiler probes have no source file -- since GCC hard-errors on a
-    # bare "-frandom-seed=".
+    # (would cost a read+hash on every invocation, hit or miss). proj must
+    # never end up empty -- pname/name aren't always exported (e.g. under
+    # __structuredAttrs) and some compiler probes have no source file --
+    # since GCC hard-errors on a bare "-frandom-seed=".
     proj=${pname:-${name:-nix-cc-wrapper}}
     case "${#sourceFileCandidates[@]}" in
         0) randomSeed=$proj ;;
