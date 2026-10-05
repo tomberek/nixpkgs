@@ -155,16 +155,39 @@ let
       # Memoization of the splices to avoid re-evaluating this function for all combinations of splices e.g.
       # python3.pythonOnBuildForHost.pythonOnBuildForTarget == python3.pythonOnBuildForTarget by consuming
       # __splices as an arg and using the cache if populated.
-      splices = {
-        pythonOnBuildForBuild = override pkgsBuildBuild.${pythonAttr};
-        pythonOnBuildForHost = override pkgsBuildHost.${pythonAttr};
-        pythonOnBuildForTarget = override pkgsBuildTarget.${pythonAttr};
-        pythonOnHostForHost = override pkgsHostHost.${pythonAttr};
-        pythonOnTargetForTarget = lib.optionalAttrs (lib.hasAttr pythonAttr pkgsTargetTarget) (
-          override pkgsTargetTarget.${pythonAttr}
-        );
-      }
-      // __splices;
+      #
+      # Not cross-compiling (build == host == target) means pkgsBuild*/pkgsHostHost/
+      # pkgsTargetTarget are all the same package set this interpreter lives in, so `self`
+      # is already each splice's value -- skip the redundant `.override`, mirroring
+      # splice.nix's `actuallySplice` short-circuit for the same reason. Compares full
+      # platform equality (as `stdenv.hostPlatform == stdenv.buildPlatform` already does
+      # elsewhere in this file, e.g. line 338), not just `.system` -- the lossy cpu-kernel
+      # double alone can't distinguish toolchain/libc-only cross variants like
+      # pkgsLLVM/pkgsArocc/pkgsZig/pkgsMusl, which are still genuine cross builds.
+      notActuallySplicing =
+        stdenv.buildPlatform == stdenv.hostPlatform && stdenv.hostPlatform == stdenv.targetPlatform;
+      splices =
+        (
+          if notActuallySplicing then
+            {
+              pythonOnBuildForBuild = self;
+              pythonOnBuildForHost = self;
+              pythonOnBuildForTarget = self;
+              pythonOnHostForHost = self;
+              pythonOnTargetForTarget = self;
+            }
+          else
+            {
+              pythonOnBuildForBuild = override pkgsBuildBuild.${pythonAttr};
+              pythonOnBuildForHost = override pkgsBuildHost.${pythonAttr};
+              pythonOnBuildForTarget = override pkgsBuildTarget.${pythonAttr};
+              pythonOnHostForHost = override pkgsHostHost.${pythonAttr};
+              pythonOnTargetForTarget = lib.optionalAttrs (lib.hasAttr pythonAttr pkgsTargetTarget) (
+                override pkgsTargetTarget.${pythonAttr}
+              );
+            }
+        )
+        // __splices;
       # When we override the interpreter we also need to override the spliced
       # versions of the interpreter. NOTE: In lua-5/interpreter.nix, this
       # filter is different - we take every attribute from @inputs, besides
